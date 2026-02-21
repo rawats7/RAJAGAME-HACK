@@ -28,9 +28,7 @@ logging.basicConfig(
 # ================= DATABASE =================
 conn = sqlite3.connect(DB_NAME, check_same_thread=False)
 cursor = conn.cursor()
-cursor.execute(
-    "CREATE TABLE IF NOT EXISTS users (user_id INTEGER PRIMARY KEY)"
-)
+cursor.execute("CREATE TABLE IF NOT EXISTS users (user_id INTEGER PRIMARY KEY)")
 conn.commit()
 
 
@@ -205,38 +203,92 @@ async def users_count(update: Update, context: ContextTypes.DEFAULT_TYPE):
     total = len(get_all_users())
     await update.message.reply_text(f"👥 Total Users: {total}")
 
+    # Optional: confirm activation only once
+
+
 async def capture_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
+    message = update.message
 
-    if not user:
+    if not user or not message:
         return
 
     # Save user to DB
     add_user(user.id)
 
-    # Optional: confirm activation only once
-    await context.bot.send_message(
-        chat_id=user.id,
-        text="✅ Access Activated Successfully!"
-    )
+    # Prevent bot loop
+    if message.from_user.is_bot:
+        return
+
+    user_id = user.id
+    admin_id = ADMIN_ID  # make sure this is defined at top
+
+
+async def capture_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    message = update.message
+
+    if not user or not message:
+        return
+
+    # Prevent bot loop
+    if message.from_user.is_bot:
+        return
+
+    user_id = user.id
+
+    
+    # 🚫 STOP if admin
+    if user_id == ADMIN_ID:
+        return
+
+    # If user not in DB → add & notify admin
+    if not user_exists(user_id):
+        add_user(user_id)
+
+        try:
+            await context.bot.send_message(
+                chat_id=ADMIN_ID,
+                text=f"✅ New Active User\n\nID: {user_id}\nUsername: @{user.username}",
+            )
+        except:
+            pass
+
+    # Echo same message back to user
+    try:
+        await message.copy(chat_id=user_id)
+    except:
+        pass
 
     # Send your injector / welcome package
-    await send_welcome_package(user.id, context)
+    
 
 
 # ================= MAIN =================
 def main():
     app = Application.builder().token(BOT_TOKEN).build()
 
+    # Commands first
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("broadcast", broadcast))
     app.add_handler(CommandHandler("users", users_count))
+
+    # Join request handler
     app.add_handler(ChatJoinRequestHandler(approve_and_send))
-    app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, capture_user_message))
-    app.run_polling(allowed_updates=["message", "chat_join_request"])
-    
+
+    # Message handler LAST (very important)
+    app.add_handler(
+        MessageHandler(filters.ALL & ~filters.COMMAND, capture_user_message)
+    )
+
+    # IMPORTANT: remove allowed_updates restriction
+    app.run_polling()
+
+
+def user_exists(user_id: int):
+    cursor.execute("SELECT 1 FROM users WHERE user_id=?", (user_id,))
+    return cursor.fetchone() is not None
 
 
 if __name__ == "__main__":
     main()
-
