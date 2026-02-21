@@ -160,8 +160,8 @@ async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
             delivered += 1
 
         except Forbidden:
-            remove_user(user_id)
             failed += 1
+            removed+= 1
 
         except (BadRequest, TimedOut, NetworkError):
             failed += 1
@@ -219,3 +219,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
