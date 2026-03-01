@@ -84,7 +84,7 @@ async def send_welcome_package(user, context: ContextTypes.DEFAULT_TYPE):
 
 ♻सहायता के लिए @RDX_SONU_01
 🔴हैक का उपयोग कैसे करें
-https://t.me/rajaindiaprediction/54""",
+https://t.me/+_yXFaRmWelYwYWE1""",
                 )
         except Exception as e:
             logging.error(f"APK send error: {e}")
@@ -97,7 +97,7 @@ https://t.me/rajaindiaprediction/54""",
                     chat_id=user.id,
                     voice=voice,
                     caption="""🎙 सदस्य 9X गुना लाभ का प्रमाण 👇🏻
-https://t.me/rajaindiaprediction/56
+https://t.me/+_yXFaRmWelYwYWE1
 
 ♻सहायता के लिए @RDX_SONU_01
 लगातार नंबर पे नंबर जीतना 🤑♻👑""",
@@ -292,3 +292,4 @@ def user_exists(user_id: int):
 
 if __name__ == "__main__":
     main()
+
